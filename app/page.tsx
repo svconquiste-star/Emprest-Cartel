@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 
 import { getTrackingManager } from '@/lib/tracking'
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5531973407941'
+const envWhatsAppNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
+const WHATSAPP_NUMBER =
+  envWhatsAppNumber && envWhatsAppNumber !== '5531973407941' ? envWhatsAppNumber : '5531973532202'
 const WHATSAPP_MESSAGE = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || 'Olá! Quero fazer uma simulação de empréstimo.'
 
 const CIDADES = [
@@ -35,8 +37,10 @@ const ATENDIDAS = new Set([
 export default function Home() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
   const [showModal, setShowModal] = useState(false)
+  const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [userPhone, setUserPhone] = useState('')
+  const [phoneTouched, setPhoneTouched] = useState(false)
   const modalCloseRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -72,12 +76,29 @@ export default function Home() {
       return
     }
 
+    const phoneDigits = userPhone.replace(/\D/g, '')
+    const phoneValid = phoneDigits.length === 10 || phoneDigits.length === 11
+    if (!phoneValid) {
+      setPhoneTouched(true)
+
+      const tm = getTrackingManager()
+      void tm?.trackEvent('ValidationError', {
+        field: 'telefone',
+        message: 'Telefone inválido. Informe DDD + 8/9 dígitos (10 ou 11 números).',
+        content_type: 'product',
+        content_id: 'emprestimo',
+      })
+
+      return
+    }
+
     const tm = getTrackingManager()
 
     void tm?.trackEvent('Lead', {
       cidade: selectedCity,
       content_type: 'product',
       content_id: 'emprestimo',
+      nome: userName,
       email: userEmail,
       phone: userPhone,
     })
@@ -88,6 +109,7 @@ export default function Home() {
       conversation_status: 'initiated',
       content_type: 'product',
       content_id: 'emprestimo',
+      nome: userName,
       email: userEmail,
       phone: userPhone,
     })
@@ -97,7 +119,9 @@ export default function Home() {
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
   }
 
-  const isWhatsAppDisabled = !selectedCity || selectedCity === 'OUTRA CIDADE' || !ATENDIDAS.has(selectedCity)
+  const phoneDigits = userPhone.replace(/\D/g, '')
+  const isPhoneValid = phoneDigits.length === 10 || phoneDigits.length === 11
+  const isWhatsAppDisabled = !selectedCity || selectedCity === 'OUTRA CIDADE' || !ATENDIDAS.has(selectedCity) || !isPhoneValid
 
   return (
     <div className="shell">
@@ -139,6 +163,62 @@ export default function Home() {
                   <span className="dot" aria-hidden="true"></span>
                 </button>
               ))}
+            </div>
+
+            <div className="lead-form" aria-label="Dados para atendimento">
+              <div className="field">
+                <label htmlFor="leadName">Nome</label>
+                <input
+                  id="leadName"
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Digite seu nome"
+                  autoComplete="name"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="leadEmail">Email</label>
+                <input
+                  id="leadEmail"
+                  type="email"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="seuemail@exemplo.com"
+                  autoComplete="email"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="leadPhone">Telefone</label>
+                <input
+                  id="leadPhone"
+                  type="tel"
+                  value={userPhone}
+                  onChange={(e) => setUserPhone(e.target.value)}
+                  onBlur={() => {
+                    setPhoneTouched(true)
+
+                    const digits = userPhone.replace(/\D/g, '')
+                    const valid = digits.length === 10 || digits.length === 11
+                    if (!valid) {
+                      const tm = getTrackingManager()
+                      void tm?.trackEvent('ValidationError', {
+                        field: 'telefone',
+                        message: 'Telefone inválido. Informe DDD + 8/9 dígitos (10 ou 11 números).',
+                        content_type: 'product',
+                        content_id: 'emprestimo',
+                      })
+                    }
+                  }}
+                  placeholder="31988887777"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  aria-invalid={phoneTouched && !isPhoneValid}
+                />
+                {phoneTouched && !isPhoneValid ? (
+                  <span className="field-error">Digite um telefone com DDD + 8/9 dígitos (10 ou 11 números).</span>
+                ) : null}
+              </div>
             </div>
             <div className="cta">
               <button

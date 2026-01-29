@@ -25,8 +25,8 @@ npm start
 
 ## Configuração
 
-- **Meta Pixel ID**: `1013145803462320`
-- **WhatsApp**: `+55 31 97340-7941`
+- **Meta Pixel ID**: `1613224946769263`
+- **WhatsApp**: `+55 31 97353-2202`
 - **Cidades Atendidas**: Belo Horizonte, Brumadinho, Contagem, Esmeralda, Ibirite, Juatuba, Mário Campos, Mateus Leme, Sarzedo
 
 ## Deploy Coolify

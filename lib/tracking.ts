@@ -167,7 +167,16 @@ class TrackingManager {
       phone ? sha256Hex(phone) : Promise.resolve(''),
     ])
 
-    const { email: _email, phone: _phone, ...restCustom } = customData
+    const { email: _email, phone: _phone, nome: _nome, ...restCustom } = customData
+
+    const leadDataForWebhook =
+      eventName === 'ConversaIniciada'
+        ? {
+            ...(typeof _nome === 'string' && _nome.trim() ? { nome: _nome.trim() } : {}),
+            ...(email ? { email } : {}),
+            ...(phone ? { telefone: phone } : {}),
+          }
+        : null
 
     const eventData: Record<string, any> = {
       event_id,
@@ -184,6 +193,7 @@ class TrackingManager {
       scroll_percentage:
         typeof restCustom.scroll_percentage === 'number' ? restCustom.scroll_percentage : this.scrollPercentage,
       ...restCustom,
+      ...(leadDataForWebhook ? leadDataForWebhook : {}),
       hashes: {
         ...(emHash ? { em: emHash } : {}),
         ...(phHash ? { ph: phHash } : {}),

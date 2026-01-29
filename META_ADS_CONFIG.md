@@ -2,7 +2,7 @@
 
 ## Pixel ID
 ```
-1013145803462320
+1613224946769263
 ```
 
 ## Eventos Rastreados
@@ -35,7 +35,7 @@ Disparado quando o usuário clica no botão WhatsApp.
 {
   cidade: "BELO HORIZONTE",
   em: "usuario@email.com",        // Email (hash SHA-256 automático)
-  ph: "5531973407941"             // Telefone (hash SHA-256 automático)
+  ph: "5531973532202"             // Telefone (hash SHA-256 automático)
 }
 ```
 
@@ -46,7 +46,7 @@ Disparado quando o usuário clica no botão WhatsApp.
 ### Passo 1: Acessar o Pixel
 1. Vá para **Meta Business Suite**
 2. Selecione **Eventos → Pixels**
-3. Clique no Pixel ID `1013145803462320`
+3. Clique no Pixel ID `1613224946769263`
 
 ### Passo 2: Configurar Correspondência Avançada
 1. Clique em **Configurações**
@@ -73,7 +73,7 @@ Disparado quando o usuário clica no botão WhatsApp.
 
 ### Telefone (ph)
 - **Formato:** Apenas dígitos, com código do país
-- **Exemplo:** `+55 31 97340-7941` → `5531973407941`
+- **Exemplo:** `+55 31 97353-2202` → `5531973532202`
 - **Hash:** Automático (SHA-256) pelo Meta Pixel
 
 ---

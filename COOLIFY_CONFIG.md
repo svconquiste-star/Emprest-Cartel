@@ -71,8 +71,8 @@ traefik.http.services.nextjs.loadbalancer.server.port=3000
 Adicione em **Configuration → Environment Variables**:
 
 ```
-NEXT_PUBLIC_META_PIXEL_ID=1013145803462320
-NEXT_PUBLIC_WHATSAPP_NUMBER=5531973407941
+NEXT_PUBLIC_META_PIXEL_ID=1613224946769263
+NEXT_PUBLIC_WHATSAPP_NUMBER=5531973532202
 NEXT_PUBLIC_WHATSAPP_MESSAGE=Olá! Quero fazer uma simulação de empréstimo.
 ```
 

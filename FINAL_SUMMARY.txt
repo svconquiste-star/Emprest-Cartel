@@ -41,12 +41,12 @@ DATE: 2026-01-10
 ================================================================================
 
 ✅ WhatsApp Integration
-   - Link: https://wa.me/5531973407941
+   - Link: https://wa.me/5531973532202
    - Message: Pre-filled
    - Tracking: Implemented
 
 ✅ Meta Ads Pixel
-   - ID: 1013145803462320
+   - ID: 1613224946769263
    - Events: PageView, CidadeSelecionada, ConversaIniciada
    - Advanced Matching: Email + Phone (Auto Hash)
 
@@ -106,8 +106,8 @@ Container Labels (16 lines):
   traefik.http.services.nextjs.loadbalancer.server.port=3000
 
 Environment Variables:
-  NEXT_PUBLIC_META_PIXEL_ID=1013145803462320
-  NEXT_PUBLIC_WHATSAPP_NUMBER=5531973407941
+  NEXT_PUBLIC_META_PIXEL_ID=1613224946769263
+  NEXT_PUBLIC_WHATSAPP_NUMBER=5531973532202
   NEXT_PUBLIC_WHATSAPP_MESSAGE=Olá! Quero fazer uma simulação de empréstimo.
 
 ================================================================================
@@ -138,8 +138,8 @@ Deployment to Coolify (10 minutes):
 
 Development:  http://localhost:3000
 Production:   https://multinexo.com.br/emprest-cartel
-Meta Pixel:   ID 1013145803462320
-WhatsApp:     https://wa.me/5531973407941
+Meta Pixel:   ID 1613224946769263
+WhatsApp:     https://wa.me/5531973532202
 
 ================================================================================
                         DOCUMENTATION FILES

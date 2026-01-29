@@ -37,8 +37,8 @@ TTL: 1800
 
 ### 4. Coolify - Variáveis de Ambiente
 ```
-NEXT_PUBLIC_META_PIXEL_ID=1013145803462320
-NEXT_PUBLIC_WHATSAPP_NUMBER=5531973407941
+NEXT_PUBLIC_META_PIXEL_ID=1613224946769263
+NEXT_PUBLIC_WHATSAPP_NUMBER=5531973532202
 NEXT_PUBLIC_WHATSAPP_MESSAGE=Olá! Quero fazer uma simulação de empréstimo.
 ```
 
@@ -100,8 +100,8 @@ https://multinexo.com.br/emprest-cartel
 
 - **Desenvolvimento:** `http://localhost:3000`
 - **Produção:** `https://multinexo.com.br/emprest-cartel`
-- **Meta Pixel:** `1013145803462320`
-- **WhatsApp:** `+55 31 97340-7941`
+- **Meta Pixel:** `1613224946769263`
+- **WhatsApp:** `+55 31 97353-2202`
 
 ---
 

@@ -36,8 +36,8 @@
 ## 🔄 Dados Migrados
 
 ### Links e Configurações
-- ✅ WhatsApp: `https://wa.me/5531973407941`
-- ✅ Meta Pixel ID: `1013145803462320`
+- ✅ WhatsApp: `https://wa.me/5531973532202`
+- ✅ Meta Pixel ID: `1613224946769263`
 - ✅ Mensagem WhatsApp: Pré-preenchida
 - ✅ 10 Cidades (9 atendidas)
 
@@ -129,8 +129,8 @@ traefik.http.services.nextjs.loadbalancer.server.port=3000
 
 ### Variáveis de Ambiente
 ```
-NEXT_PUBLIC_META_PIXEL_ID=1013145803462320
-NEXT_PUBLIC_WHATSAPP_NUMBER=5531973407941
+NEXT_PUBLIC_META_PIXEL_ID=1613224946769263
+NEXT_PUBLIC_WHATSAPP_NUMBER=5531973532202
 NEXT_PUBLIC_WHATSAPP_MESSAGE=Olá! Quero fazer uma simulação de empréstimo.
 ```
 
@@ -188,8 +188,8 @@ Emprest-Cartel/
 |------|-----|
 | Desenvolvimento | `http://localhost:3000` |
 | Produção | `https://multinexo.com.br/emprest-cartel` |
-| Meta Pixel | ID: `1013145803462320` |
-| WhatsApp | `https://wa.me/5531973407941` |
+| Meta Pixel | ID: `1613224946769263` |
+| WhatsApp | `https://wa.me/5531973532202` |
 
 ---
 

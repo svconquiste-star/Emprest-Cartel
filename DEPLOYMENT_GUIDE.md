@@ -39,7 +39,7 @@ Emprest-Cartel/
 ## Funcionalidades Implementadas
 
 ### 1. Meta Ads Pixel
-- **ID:** `1013145803462320`
+- **ID:** `1613224946769263`
 - **Eventos:**
   - `PageView` (automático)
   - `CidadeSelecionada` (ao selecionar cidade)
@@ -53,7 +53,7 @@ Emprest-Cartel/
 - Rastreamento de seleção no Meta Ads
 
 ### 3. Integração WhatsApp
-- Link direto: `https://wa.me/5531973407941`
+- Link direto: `https://wa.me/5531973532202`
 - Mensagem pré-preenchida
 - Rastreamento ao clicar
 - Envio de dados de correspondência avançada
@@ -138,8 +138,8 @@ nslookup emprest-cartel.multinexo.com.br
 Vá para **Configuration → Environment Variables** e adicione:
 
 ```
-NEXT_PUBLIC_META_PIXEL_ID=1013145803462320
-NEXT_PUBLIC_WHATSAPP_NUMBER=5531973407941
+NEXT_PUBLIC_META_PIXEL_ID=1613224946769263
+NEXT_PUBLIC_WHATSAPP_NUMBER=5531973532202
 NEXT_PUBLIC_WHATSAPP_MESSAGE=Olá! Quero fazer uma simulação de empréstimo.
 ```
 
@@ -256,5 +256,5 @@ Para dúvidas sobre:
 - **Porta Interna:** 3000
 - **Framework:** Next.js 14
 - **Styling:** CSS puro + Tailwind
-- **Meta Pixel ID:** 1013145803462320
-- **WhatsApp:** +55 31 97340-7941
+- **Meta Pixel ID:** 1613224946769263
+- **WhatsApp:** +55 31 97353-2202
