@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   themeColor: '#030814',
 }
 
-const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1013145803462320'
+const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID || '1613224946769263'
 
 export default function RootLayout({
   children,

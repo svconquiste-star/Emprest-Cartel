@@ -2,19 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-interface FbqType {
-  (action: string, event: string, data?: Record<string, any>): void
-  callMethod?: (...args: any[]) => void
-  queue?: any[]
-  loaded?: boolean
-  version?: string
-}
-
-declare global {
-  interface Window {
-    fbq?: FbqType
-  }
-}
+import { getTrackingManager } from '@/lib/tracking'
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5531973407941'
 const WHATSAPP_MESSAGE = process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE || 'Olá! Quero fazer uma simulação de empréstimo.'
@@ -55,22 +43,26 @@ export default function Home() {
     document.getElementById('year')!.textContent = new Date().getFullYear().toString()
   }, [])
 
-  const trackMetaAds = (eventName: string, data?: Record<string, any>) => {
-    try {
-      if (typeof window !== 'undefined' && window.fbq) {
-        window.fbq('trackCustom', eventName, data)
-      }
-    } catch (e) {
-      console.error('Meta Ads tracking error:', e)
-    }
-  }
+  useEffect(() => {
+    const tm = getTrackingManager()
+    void tm?.trackEvent('ViewContent', { content_type: 'product', content_id: 'emprestimo' })
+  }, [])
 
   const handleCityClick = (cidade: string) => {
     setSelectedCity(cidade)
-    trackMetaAds('CidadeSelecionada', { cidade })
+
+    const tm = getTrackingManager()
+    void tm?.trackEvent('ViewContent', { cidade, content_type: 'product', content_id: 'emprestimo' })
 
     if (cidade === 'OUTRA CIDADE' || !ATENDIDAS.has(cidade)) {
       setShowModal(true)
+
+      void tm?.trackEvent('CityNotAvailable', {
+        cidade,
+        content_type: 'product',
+        content_id: 'emprestimo',
+      })
+
       return
     }
   }
@@ -80,19 +72,25 @@ export default function Home() {
       return
     }
 
-    const userData: Record<string, any> = {
+    const tm = getTrackingManager()
+
+    void tm?.trackEvent('Lead', {
       cidade: selectedCity,
-    }
+      content_type: 'product',
+      content_id: 'emprestimo',
+      email: userEmail,
+      phone: userPhone,
+    })
 
-    if (userEmail) {
-      userData.em = userEmail.toLowerCase()
-    }
-
-    if (userPhone) {
-      userData.ph = userPhone.replace(/\D/g, '')
-    }
-
-    trackMetaAds('ConversaIniciada', userData)
+    void tm?.trackEvent('ConversaIniciada', {
+      cidade: selectedCity,
+      conversation_channel: 'whatsapp',
+      conversation_status: 'initiated',
+      content_type: 'product',
+      content_id: 'emprestimo',
+      email: userEmail,
+      phone: userPhone,
+    })
 
     const encodedMessage = encodeURIComponent(WHATSAPP_MESSAGE)
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`
