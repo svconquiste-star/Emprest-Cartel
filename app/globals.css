@@ -1,11 +1,15 @@
 :root {
-  --bg: #050814;
-  --card: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.12);
-  --text: #e8eefc;
-  --muted: rgba(232, 238, 252, 0.72);
-  --accent: #22c55e;
-  --accent-2: #16a34a;
+  --bg-base: #0a0e14;
+  --bg-card: rgba(15, 20, 30, 0.92);
+  --border: rgba(255, 255, 255, 0.1);
+  --brand: #00d4aa;
+  --brand-dark: #00b894;
+  --gold: #d4a54a;
+  --text: #f0f4f8;
+  --muted: rgba(240, 244, 248, 0.55);
+  --error: #f87171;
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: 'Merriweather', Georgia, serif;
 }
 
 * {
@@ -16,12 +20,11 @@ html,
 body {
   padding: 0;
   margin: 0;
-  background: radial-gradient(1200px 900px at 50% 0%, rgba(56, 189, 248, 0.15), transparent 55%),
-    radial-gradient(900px 700px at 20% 90%, rgba(34, 197, 94, 0.16), transparent 55%),
-    var(--bg);
+  background: radial-gradient(1000px 800px at 50% 0%, rgba(0, 212, 170, 0.1), transparent 60%),
+    radial-gradient(800px 600px at 80% 100%, rgba(212, 165, 74, 0.08), transparent 60%),
+    var(--bg-base);
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji",
-    "Segoe UI Emoji";
+  font-family: var(--font-sans);
 }
 
 a {
@@ -34,58 +37,76 @@ button {
   font: inherit;
 }
 
+/* ── Container ── */
+
 .container {
   max-width: 520px;
   margin: 0 auto;
-  padding: 22px 16px 28px;
+  padding: 24px 16px 32px;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
+/* ── Card ── */
+
 .card {
-  background: var(--card);
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 16px;
-  backdrop-filter: blur(14px);
+  border-radius: 28px;
+  padding: 28px 22px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
+
+/* ── Badge ── */
 
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 14px;
+  border: 1px solid rgba(212, 165, 74, 0.3);
+  background: rgba(212, 165, 74, 0.08);
   border-radius: 999px;
-  color: var(--muted);
+  color: var(--gold);
   font-weight: 600;
   font-size: 13px;
 }
 
+/* ── Typography ── */
+
 .h1 {
-  font-size: 30px;
-  line-height: 1.15;
-  margin: 10px 0 8px;
+  font-family: var(--font-serif);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 14px 0 8px;
+  color: var(--text);
 }
 
 .subtitle {
   margin: 0;
   color: var(--muted);
-  line-height: 1.55;
+  line-height: 1.6;
+  font-size: 15px;
 }
+
+/* ── Form ── */
 
 .form {
   display: grid;
-  gap: 12px;
-  margin-top: 12px;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.form-group {
+  display: grid;
+  gap: 6px;
 }
 
 .label {
-  display: grid;
-  gap: 6px;
   color: var(--muted);
   font-size: 13px;
   font-weight: 700;
@@ -96,58 +117,131 @@ button {
   width: 100%;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   color: var(--text);
-  padding: 12px 12px;
+  padding: 13px 14px;
   outline: none;
+  font-size: 15px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .input:focus {
-  border-color: rgba(34, 197, 94, 0.6);
-  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.14);
+  border-color: rgba(0, 212, 170, 0.5);
+  box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.1);
 }
 
-.error {
-  color: rgba(248, 113, 113, 0.95);
-  font-size: 12px;
-  margin-top: 6px;
+.input-error {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.15) !important;
 }
+
+.error-message {
+  color: var(--error);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.trust-text {
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* ── CTA ── */
 
 .cta {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin-top: 8px;
 }
 
-.button {
+.btn-whatsapp {
   border: 0;
   border-radius: 16px;
-  padding: 14px 14px;
+  padding: 15px 16px;
   font-weight: 800;
-  letter-spacing: 0.01em;
+  font-size: 16px;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  background: linear-gradient(180deg, var(--accent), var(--accent-2));
-  color: #04120a;
+  background: linear-gradient(180deg, var(--brand), var(--brand-dark));
+  color: #021a12;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  box-shadow: 0 4px 20px rgba(0, 212, 170, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.button[disabled] {
-  opacity: 0.55;
+.btn-whatsapp:hover:not([disabled]) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(0, 212, 170, 0.4);
+}
+
+.btn-whatsapp:active:not([disabled]) {
+  transform: translateY(0);
+}
+
+.btn-whatsapp[disabled] {
+  opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.lock {
+.btn-whatsapp i {
+  font-size: 20px;
+}
+
+/* ── Trust ── */
+
+.trust {
+  color: var(--muted);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+/* ── Footer ── */
+
+.footer {
+  margin-top: auto;
+  padding-top: 16px;
+  text-align: center;
   color: var(--muted);
   font-size: 12px;
 }
 
-.footer {
-  margin-top: auto;
-  padding-top: 14px;
-  text-align: center;
-  color: rgba(232, 238, 252, 0.55);
-  font-size: 12px;
+/* ── Responsive ── */
+
+@media (min-width: 480px) {
+  .card {
+    padding: 32px 28px;
+  }
+
+  .h1 {
+    font-size: 32px;
+  }
+
+  .container {
+    padding: 32px 20px 40px;
+  }
+}
+
+@media (min-width: 768px) {
+  .h1 {
+    font-size: 36px;
+  }
+
+  .card {
+    padding: 40px 36px;
+  }
+
+  .container {
+    padding: 48px 24px 56px;
+  }
 }
