@@ -1,4 +1,4 @@
-import { detectDeviceType, getOS, hashSHA256, normalizePhone, validatePhone } from './lib/utils';
+import { hashSHA256, normalizePhone, validatePhone } from './lib/utils';
 
 declare global {
   interface Window {
@@ -6,15 +6,7 @@ declare global {
   }
 }
 
-export type TrackingEventName =
-  | 'PageView'
-  | 'ViewContent'
-  | 'ConversaIniciada'
-  | 'Lead'
-  | 'Contact'
-  | 'ValidationError'
-  | 'WhatsAppButtonClick'
-  | 'ContactError';
+export type TrackingEventName = 'PageView' | 'ViewContent' | 'Contact';
 
 export type TrackingPayload = {
   event_id: string;
@@ -22,15 +14,12 @@ export type TrackingPayload = {
   timestamp: number;
   source: 'web';
   event_source_url?: string;
-  device_type?: string;
-  os?: string;
   fbc?: string;
   fbp?: string;
   external_id?: string;
-  conversation_id?: string;
+  client_user_agent?: string;
   fn?: string;
   ph?: string;
-  cidade?: string;
   value?: number;
   currency?: string;
 };
@@ -63,16 +52,6 @@ export function getFbCookies() {
   } catch (_) {}
 
   return { fbc, fbp };
-}
-
-export function getOrCreateConversationId() {
-  if (typeof window === 'undefined') return '';
-  const key = 'conversation_id';
-  const existing = window.sessionStorage.getItem(key);
-  if (existing) return existing;
-  const id = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
-  window.sessionStorage.setItem(key, id);
-  return id;
 }
 
 export function gerarEventId(eventName: string) {
@@ -138,14 +117,22 @@ export async function getVisitorFingerprint() {
   return hashed;
 }
 
-function sanitizeForPixel(payload: TrackingPayload) {
-  const sanitized: Record<string, any> = {};
-  for (const [k, v] of Object.entries(payload || {})) {
-    if (v === undefined || v === null) continue;
-    if (k === 'client_ip' || k === 'user_agent' || k === 'email' || k === 'phone') continue;
-    sanitized[k] = v;
+function getStandardPixelPayload(eventId: string, eventName: TrackingEventName) {
+  return {
+    value: 0,
+    currency: CURRENCY,
+    content_name: eventName,
+  };
+}
+
+function getDomainOnly() {
+  if (typeof window === 'undefined') return '';
+  try {
+    const url = new URL(window.location.href);
+    return `${url.protocol}//${url.hostname}${url.port ? ':' + url.port : ''}/`;
+  } catch (_) {
+    return '';
   }
-  return sanitized;
 }
 
 const appliedAdvancedMatching = new Set<string>();
@@ -166,8 +153,6 @@ function applyAdvancedMatching(pixelId: string, user: { ph?: string; fn?: string
 
 export async function sendToMetaPixel(args: {
   eventName: TrackingEventName;
-  pixelMethod: 'track' | 'trackCustom';
-  data?: Partial<TrackingPayload>;
   eventId?: string;
   phone?: string;
   name?: string;
@@ -185,42 +170,22 @@ export async function sendToMetaPixel(args: {
 
   const { fbc, fbp } = getFbCookies();
   const external_id = await getVisitorFingerprint();
-  const conversation_id = getOrCreateConversationId();
 
   const phoneNormalized = args.phone ? normalizePhone(args.phone) : '';
   const ph = phoneNormalized && validatePhone(phoneNormalized) ? await hashSHA256(phoneNormalized) : '';
   const fn = args.name ? await hashSHA256(String(args.name).trim().toLowerCase()) : '';
 
-  const payload: TrackingPayload = {
-    event_id: eventId,
-    event_name: args.eventName,
-    timestamp: Date.now(),
-    source: 'web',
-    value: 0,
-    currency: CURRENCY,
-    event_source_url: typeof window !== 'undefined' ? window.location.href : undefined,
-    device_type: detectDeviceType(),
-    os: getOS(),
-    fbc: fbc || undefined,
-    fbp: fbp || undefined,
-    external_id: external_id || undefined,
-    conversation_id: conversation_id || undefined,
-    ph: ph || undefined,
-    fn: fn || undefined,
-    ...(args.data || {}),
-  };
-
   try {
     if (typeof window !== 'undefined' && window.fbq) {
       applyAdvancedMatching(pixelId, {
-        ph: payload.ph,
-        fn: payload.fn,
-        fbc: payload.fbc,
-        fbp: payload.fbp,
-        external_id: payload.external_id,
+        ph: ph || undefined,
+        fn: fn || undefined,
+        fbc: fbc || undefined,
+        fbp: fbp || undefined,
+        external_id: external_id || undefined,
       });
-      const safe = sanitizeForPixel(payload);
-      window.fbq(args.pixelMethod, args.eventName, safe, { eventID: eventId });
+      const pixelPayload = getStandardPixelPayload(eventId, args.eventName);
+      window.fbq('track', args.eventName, pixelPayload, { eventID: eventId });
       sent.add(eventId);
       persistSessionSentEventIds(sent);
     }
@@ -228,7 +193,7 @@ export async function sendToMetaPixel(args: {
     return { ok: false, reason: 'pixel', event_id: eventId };
   }
 
-  return { ok: true, event_id: eventId };
+  return { ok: true, event_id: eventId, ph, fn, fbc, fbp, external_id };
 }
 
 export async function sendToN8NWebhook(payload: any) {
@@ -254,6 +219,57 @@ export async function sendToN8NWebhook(payload: any) {
 
 export async function trackOnceViewContent() {
   if (!shouldFireOncePerVisitor('view_content')) return;
-  const r = await sendToMetaPixel({ eventName: 'ViewContent', pixelMethod: 'track' });
-  if (r.ok) markOncePerVisitor('view_content');
+  const r = await sendToMetaPixel({ eventName: 'ViewContent' });
+  if (r.ok) {
+    markOncePerVisitor('view_content');
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    void sendToN8NWebhook({
+      event_name: 'ViewContent',
+      event_id: r.event_id,
+      timestamp: new Date().toISOString(),
+      source: 'web',
+      event_source_url: getDomainOnly(),
+      ph: r.ph || undefined,
+      fn: r.fn || undefined,
+      fbc: r.fbc || undefined,
+      fbp: r.fbp || undefined,
+      external_id: r.external_id || undefined,
+      client_user_agent: ua || undefined,
+    });
+  }
+}
+
+export async function trackContact(args: {
+  phone: string;
+  name?: string;
+  cidade?: string;
+  telefone?: string;
+}) {
+  const eventId = gerarEventId('Contact');
+  const r = await sendToMetaPixel({
+    eventName: 'Contact',
+    eventId,
+    phone: args.phone,
+    name: args.name,
+  });
+
+  const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  void sendToN8NWebhook({
+    event_name: 'Contact',
+    event_id: eventId,
+    timestamp: new Date().toISOString(),
+    source: 'web',
+    event_source_url: getDomainOnly(),
+    ph: r.ph || undefined,
+    fn: r.fn || undefined,
+    fbc: r.fbc || undefined,
+    fbp: r.fbp || undefined,
+    external_id: r.external_id || undefined,
+    client_user_agent: ua || undefined,
+    cidade: args.cidade || undefined,
+    nome: args.name || undefined,
+    telefone: args.telefone || undefined,
+  });
+
+  return r;
 }

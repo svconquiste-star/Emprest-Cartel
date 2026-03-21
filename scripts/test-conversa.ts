@@ -1,4 +1,4 @@
-import { sendToMetaPixel } from '../app/utils';
+import { trackContact } from '../app/utils';
 
 type FbqCall = {
   args: any[];
@@ -53,22 +53,29 @@ async function main() {
     configurable: true,
   });
 
-  await sendToMetaPixel({
-    eventName: 'ConversaIniciada',
-    pixelMethod: 'trackCustom',
-    phone: '31999999999',
-    name: 'Teste',
-    data: { cidade: 'BH' },
+  const originalFetch = globalThis.fetch;
+  Object.defineProperty(globalThis, 'fetch', {
+    configurable: true,
+    value: async () => ({ ok: true, status: 200, text: async () => '', json: async () => ({}) }) as any,
   });
 
-  const hasConversa = calls.some((c) => c.args[0] === 'trackCustom' && c.args[1] === 'ConversaIniciada');
+  await trackContact({
+    phone: '31999999999',
+    name: 'Teste',
+    cidade: 'BH',
+    telefone: '5531999999999',
+  });
+
+  Object.defineProperty(globalThis, 'fetch', { value: originalFetch, configurable: true });
+
+  const hasContact = calls.some((c) => c.args[0] === 'track' && c.args[1] === 'Contact');
   const hasEventId = calls.some((c) => {
     const last = c.args[c.args.length - 1];
     return last && typeof last === 'object' && 'eventID' in last;
   });
 
-  if (!hasConversa) {
-    console.error('FAIL: Não encontrou chamada fbq trackCustom ConversaIniciada');
+  if (!hasContact) {
+    console.error('FAIL: Não encontrou chamada fbq track Contact');
     process.exit(1);
   }
 
@@ -77,7 +84,7 @@ async function main() {
     process.exit(1);
   }
 
-  console.log('OK: ConversaIniciada enviada via fbq com eventID');
+  console.log('OK: Contact enviado via fbq com eventID (Core Config)');
 }
 
 main().catch((e) => {

@@ -1,4 +1,4 @@
-import { sendToMetaPixel, sendToN8NWebhook, trackOnceViewContent } from '../app/utils';
+import { sendToMetaPixel, trackContact, trackOnceViewContent } from '../app/utils';
 
 type FbqCall = { args: any[] };
 
@@ -18,7 +18,7 @@ async function setupBrowserMocks() {
   const fetchCalls: FetchCall[] = [];
 
   const fakeWindow: any = {
-    location: { href: 'http://localhost:3000/?fbclid=TEST_FBCLID' },
+    location: { href: 'http://localhost:3000/' },
     sessionStorage: {
       store: new Map<string, string>(),
       getItem(key: string) {
@@ -47,7 +47,7 @@ async function setupBrowserMocks() {
   };
 
   const fakeNavigator: any = {
-    userAgent: 'Mozilla/5.0',
+    userAgent: 'Mozilla/5.0 (Test)',
   };
 
   Object.defineProperty(globalThis, 'window', { value: fakeWindow, configurable: true });
@@ -78,78 +78,125 @@ async function setupBrowserMocks() {
 }
 
 async function main() {
-  assert(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, 'NEXT_PUBLIC_FACEBOOK_PIXEL_ID precisa estar definido para o teste');
+  assert(process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID, 'NEXT_PUBLIC_FACEBOOK_PIXEL_ID precisa estar definido');
   assert(
     process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL,
-    'NEXT_PUBLIC_N8N_WEBHOOK_URL (ou N8N_WEBHOOK_URL) precisa estar definido para o teste'
+    'NEXT_PUBLIC_N8N_WEBHOOK_URL (ou N8N_WEBHOOK_URL) precisa estar definido'
   );
 
   const mocks = await setupBrowserMocks();
-
-  // 1) ViewContent once-per-visitor
-  await trackOnceViewContent();
-  const viewContentCalls = mocks.fbqCalls.filter((c) => c.args[0] === 'track' && c.args[1] === 'ViewContent');
-  assert(viewContentCalls.length === 1, `Esperado 1 chamada ViewContent, obtido ${viewContentCalls.length}`);
-
-  // Deve não duplicar
-  await trackOnceViewContent();
-  const viewContentCalls2 = mocks.fbqCalls.filter((c) => c.args[0] === 'track' && c.args[1] === 'ViewContent');
-  assert(viewContentCalls2.length === 1, 'ViewContent não deveria disparar 2x por visitante');
-
-  // 2) ConversaIniciada
-  await sendToMetaPixel({
-    eventName: 'ConversaIniciada',
-    pixelMethod: 'trackCustom',
-    phone: '31999999999',
-    name: 'Teste',
-    data: { cidade: 'BH' },
-  });
-
-  // 3) Lead
-  await sendToMetaPixel({
-    eventName: 'Lead',
-    pixelMethod: 'track',
-    phone: '31999999999',
-    name: 'Teste',
-    data: { cidade: 'BH' },
-  });
-
-  // 4) Contact
-  await sendToMetaPixel({
-    eventName: 'Contact',
-    pixelMethod: 'track',
-    phone: '31999999999',
-    name: 'Teste',
-    data: { cidade: 'BH' },
-  });
-
-  const hasConversa = mocks.fbqCalls.some((c) => c.args[0] === 'trackCustom' && c.args[1] === 'ConversaIniciada');
-  const hasLead = mocks.fbqCalls.some((c) => c.args[0] === 'track' && c.args[1] === 'Lead');
-  const hasContact = mocks.fbqCalls.some((c) => c.args[0] === 'track' && c.args[1] === 'Contact');
-
-  assert(hasConversa, 'Não encontrou fbq trackCustom ConversaIniciada');
-  assert(hasLead, 'Não encontrou fbq track Lead');
-  assert(hasContact, 'Não encontrou fbq track Contact');
-
-  // eventID presente pelo menos nos eventos principais
-  const hasEventId = mocks.fbqCalls.some((c) => {
-    const last = c.args[c.args.length - 1];
-    return last && typeof last === 'object' && 'eventID' in last;
-  });
-  assert(hasEventId, 'Não encontrou eventID em nenhuma chamada fbq');
-
-  // 5) Eventos N8N-only: apenas valida que fazem fetch para o webhook
-  await sendToN8NWebhook({ event_name: 'ValidationError', source: 'web' });
-  await sendToN8NWebhook({ event_name: 'WhatsAppButtonClick', source: 'web' });
-  await sendToN8NWebhook({ event_name: 'ContactError', source: 'web' });
-
   const n8nUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || process.env.N8N_WEBHOOK_URL || '';
-  const n8nCalls = mocks.fetchCalls.filter((c) => c.url === n8nUrl);
-  assert(n8nCalls.length >= 3, `Esperado >=3 chamadas ao N8N webhook, obtido ${n8nCalls.length}`);
+
+  console.log('\n--- Teste 1: ViewContent (Pixel + N8N, once-per-visitor) ---');
+
+  await trackOnceViewContent();
+  const vcPixel = mocks.fbqCalls.filter((c) => c.args[0] === 'track' && c.args[1] === 'ViewContent');
+  assert(vcPixel.length === 1, `Esperado 1 ViewContent no Pixel, obtido ${vcPixel.length}`);
+
+  const vcN8n = mocks.fetchCalls.filter((c) => {
+    if (c.url !== n8nUrl) return false;
+    try {
+      const body = JSON.parse(c.options?.body || '{}');
+      return body.event_name === 'ViewContent';
+    } catch (_) {
+      return false;
+    }
+  });
+  assert(vcN8n.length === 1, `Esperado 1 ViewContent no N8N, obtido ${vcN8n.length}`);
+
+  await trackOnceViewContent();
+  const vcPixel2 = mocks.fbqCalls.filter((c) => c.args[0] === 'track' && c.args[1] === 'ViewContent');
+  assert(vcPixel2.length === 1, 'ViewContent não deveria disparar 2x por visitante');
+
+  console.log('  OK: ViewContent disparado 1x (Pixel + N8N), dedupe OK');
+
+  console.log('\n--- Teste 2: Contact (Pixel + N8N, ao clicar WhatsApp) ---');
+
+  await trackContact({
+    phone: '31999999999',
+    name: 'Teste',
+    cidade: 'Belo Horizonte',
+    telefone: '5531999999999',
+  });
+
+  const contactPixel = mocks.fbqCalls.filter((c) => c.args[0] === 'track' && c.args[1] === 'Contact');
+  assert(contactPixel.length === 1, `Esperado 1 Contact no Pixel, obtido ${contactPixel.length}`);
+
+  const contactN8n = mocks.fetchCalls.filter((c) => {
+    if (c.url !== n8nUrl) return false;
+    try {
+      const body = JSON.parse(c.options?.body || '{}');
+      return body.event_name === 'Contact';
+    } catch (_) {
+      return false;
+    }
+  });
+  assert(contactN8n.length === 1, `Esperado 1 Contact no N8N, obtido ${contactN8n.length}`);
+
+  console.log('  OK: Contact disparado 1x (Pixel + N8N)');
+
+  console.log('\n--- Teste 3: Pixel envia apenas parâmetros padrão (sem custom params) ---');
+
+  const contactPayload = contactPixel[0].args[2];
+  assert(typeof contactPayload === 'object', 'Payload do Contact deveria ser um objeto');
+  assert('value' in contactPayload, 'Payload deveria conter value');
+  assert('currency' in contactPayload, 'Payload deveria conter currency');
+  assert(!('cidade' in contactPayload), 'Payload NÃO deveria conter cidade (custom param)');
+  assert(!('nome' in contactPayload), 'Payload NÃO deveria conter nome (custom param)');
+  assert(!('telefone' in contactPayload), 'Payload NÃO deveria conter telefone (custom param)');
+  assert(!('device_type' in contactPayload), 'Payload NÃO deveria conter device_type (custom param)');
+  assert(!('os' in contactPayload), 'Payload NÃO deveria conter os (custom param)');
+
+  console.log('  OK: Pixel payload contém apenas parâmetros padrão Meta');
+
+  console.log('\n--- Teste 4: eventID presente em todas chamadas fbq ---');
+
+  for (const call of mocks.fbqCalls) {
+    if (call.args[0] === 'init' || call.args[0] === 'set') continue;
+    const last = call.args[call.args.length - 1];
+    assert(last && typeof last === 'object' && 'eventID' in last, `Chamada fbq ${call.args[0]} ${call.args[1]} sem eventID`);
+  }
+
+  console.log('  OK: Todas chamadas fbq track/trackCustom têm eventID');
+
+  console.log('\n--- Teste 5: Advanced Matching (init com hashes) ---');
+
+  const initCalls = mocks.fbqCalls.filter((c) => c.args[0] === 'init');
+  assert(initCalls.length >= 1, 'Esperado pelo menos 1 chamada fbq init (Advanced Matching)');
+  const initPayload = initCalls[0].args[2];
+  assert(typeof initPayload === 'object', 'Advanced Matching payload deveria ser um objeto');
+
+  console.log('  OK: fbq init chamado com Advanced Matching');
+
+  console.log('\n--- Teste 6: N8N payload do Contact contém dados extras ---');
+
+  const contactN8nBody = JSON.parse(contactN8n[0].options?.body || '{}');
+  assert(contactN8nBody.cidade === 'Belo Horizonte', 'N8N Contact deveria conter cidade');
+  assert(contactN8nBody.nome === 'Teste', 'N8N Contact deveria conter nome');
+  assert(contactN8nBody.telefone === '5531999999999', 'N8N Contact deveria conter telefone');
+  assert(contactN8nBody.client_user_agent, 'N8N Contact deveria conter client_user_agent');
+  assert(contactN8nBody.ph, 'N8N Contact deveria conter ph (hash)');
+  assert(contactN8nBody.fbc, 'N8N Contact deveria conter fbc');
+  assert(contactN8nBody.fbp, 'N8N Contact deveria conter fbp');
+  assert(contactN8nBody.external_id, 'N8N Contact deveria conter external_id');
+  assert(contactN8nBody.event_source_url === 'http://localhost:3000/', 'N8N event_source_url deveria ser domain-only');
+
+  console.log('  OK: N8N Contact payload contém dados extras + Advanced Matching');
+
+  console.log('\n--- Teste 7: Eventos custom REMOVIDOS (conformidade Core Config) ---');
+
+  const customEvents = mocks.fbqCalls.filter(
+    (c) => c.args[0] === 'trackCustom' || ['ConversaIniciada', 'Lead', 'ValidationError', 'WhatsAppButtonClick', 'ContactError'].includes(c.args[1])
+  );
+  assert(customEvents.length === 0, `Esperado 0 eventos custom no Pixel, obtido ${customEvents.length}`);
+
+  console.log('  OK: Nenhum evento custom enviado ao Pixel');
 
   mocks.restore();
 
-  console.log('OK: Todos os eventos principais foram disparados (Pixel + N8N)');
+  console.log('\n========================================');
+  console.log('TODOS OS TESTES PASSARAM (Core Config Meta)');
+  console.log('========================================\n');
 }
 
 main().catch((e) => {

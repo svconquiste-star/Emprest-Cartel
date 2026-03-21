@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { formatPhoneForDisplay, normalizePhone, validatePhone } from './lib/utils';
-import { gerarEventId, sendToMetaPixel, sendToN8NWebhook, trackOnceViewContent } from './utils';
+import { trackContact, trackOnceViewContent } from './utils';
 
 const WHATSAPP_PHONE = '5531975021616';
 
@@ -37,81 +37,12 @@ export default function Page() {
 
     window.open(link, '_blank', 'noopener,noreferrer');
 
-    const event_source_url = window.location.href;
-    const baseN8n = {
-      timestamp: new Date().toISOString(),
-      source: 'web',
-      event_source_url,
+    void trackContact({
+      phone: phoneDigits,
+      name: name.trim() || undefined,
       cidade: city.trim(),
-      nome: name.trim() || undefined,
       telefone: phoneNormalized || phoneDigits || undefined,
-    };
-
-    if (!phoneOk) {
-      void sendToN8NWebhook({
-        event_name: 'ValidationError',
-        ...baseN8n,
-        validation_errors: 'telefone',
-      });
-      return;
-    }
-
-    const contatoEventId = gerarEventId('Contact');
-
-    void (async () => {
-      await sendToMetaPixel({
-        eventName: 'ConversaIniciada',
-        pixelMethod: 'trackCustom',
-        phone: phoneDigits,
-        name,
-        data: { cidade: city.trim() },
-      });
-
-      await sendToMetaPixel({
-        eventName: 'Lead',
-        pixelMethod: 'track',
-        phone: phoneDigits,
-        name,
-        data: { cidade: city.trim() },
-      });
-
-      const apiResp = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event_id: contatoEventId,
-          event_source_url,
-          cidade: city.trim(),
-          nome: name.trim(),
-          telefone: phoneDigits,
-        }),
-      }).catch(() => null);
-
-      if (!apiResp || !apiResp.ok) {
-        void sendToN8NWebhook({
-          event_name: 'ContactError',
-          ...baseN8n,
-          event_id: contatoEventId,
-          error_reason: apiResp ? `http_${apiResp.status}` : 'network',
-        });
-        return;
-      }
-
-      await sendToMetaPixel({
-        eventName: 'Contact',
-        pixelMethod: 'track',
-        eventId: contatoEventId,
-        phone: phoneDigits,
-        name,
-        data: { cidade: city.trim() },
-      });
-
-      void sendToN8NWebhook({
-        event_name: 'WhatsAppButtonClick',
-        ...baseN8n,
-        event_id: contatoEventId,
-      });
-    })();
+    });
   };
 
   return (
