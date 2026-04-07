@@ -16,7 +16,7 @@ const merriweather = Merriweather({
   display: 'swap',
 });
 
-const PIXEL_ID = '1325454299634632';
+const PIXEL_ID = '1625627995434532';
 
 export const metadata = {
   title: 'Fale com um Especialista | Atendimento via WhatsApp',
